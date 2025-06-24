@@ -1,0 +1,14 @@
+name: MapTeleport
+version: '1.0-SNAPSHOT'
+main: dev.skymlg.mapteleport.MapTeleport
+commands:
+  map:
+    description: Teleportiere dich zu einer Welt oder liste alle Welten auf
+    usage: /map <list|tp>
+permissions:
+  map.list:
+    description: Erlaubt das Anzeigen aller Maps mit /map list
+    default: true
+  map.tp:
+    description: Erlaubt das Teleportieren zu einer Map mit /map tp
+    default: op

@@ -1,0 +1,8 @@
+prefix: "&7[&aMap&7] "
+only-player: "&cNur Spieler können diesen Befehl benutzen."
+no-permission: "&cDu hast keine Berechtigung, diesen Befehl zu benutzen."
+usage: "&7Nutze: &e/map list &7oder &e/map tp <weltname>"
+list: "&7Verfügbare Maps: &e{maps}"
+not-found: "&cWelt &e{map}&c nicht gefunden!"
+teleport-success: "&aTeleportiert zu &e{map}&a!"
+load-error: "&cFehler beim Laden der Welt &e{map}&c."

@@ -4,7 +4,7 @@ main: dev.skymlg.mapteleport.MapTeleport
 commands:
   map:
     description: Teleportiere dich zu einer Welt oder liste alle Welten auf
-    usage: /map <list|tp|setspawn>
+    usage: /map <list|tp|setspawn|delete>
 permissions:
   map.list:
     description: Erlaubt das Anzeigen aller Maps mit /map list
@@ -14,4 +14,7 @@ permissions:
     default: op
   map.setspawn:
     description: Erlaubt das Setzen des Spawns einer Map mit /map setspawn
+    default: op
+  map.create:
+    description: Erlaubt das Erstellen einer neuen Map mit /map create
     default: op

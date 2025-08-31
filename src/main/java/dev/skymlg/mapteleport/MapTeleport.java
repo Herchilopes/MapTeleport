@@ -51,14 +51,22 @@ public class MapTeleport extends JavaPlugin implements CommandExecutor, TabCompl
     }
 
     private List<String> getAvailableWorlds() {
+        Set<String> worldNames = new HashSet<>();
+
+        // Geladene Welten
+        for (World world : Bukkit.getWorlds()) {
+            worldNames.add(world.getName());
+        }
+
+        // Ordner durchsuchen
         File baseFolder = getServer().getWorldContainer();
-        List<String> worldNames = new ArrayList<>();
         for (File file : Objects.requireNonNull(baseFolder.listFiles())) {
             if (file.isDirectory() && new File(file, "level.dat").exists()) {
                 worldNames.add(file.getName());
             }
         }
-        return worldNames;
+
+        return new ArrayList<>(worldNames);
     }
 
     private void saveSpawn(String mapName, Location loc) {
@@ -97,6 +105,50 @@ public class MapTeleport extends JavaPlugin implements CommandExecutor, TabCompl
             Map<String, String> params = new HashMap<>();
             params.put("maps", String.join(", ", getAvailableWorlds()));
             player.sendMessage(msg.get("list", params));
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("create")) {
+            if (!player.hasPermission("map.create")) {
+                player.sendMessage(msg.get("no-permission"));
+                return true;
+            }
+            if (args.length < 2) {
+                player.sendMessage(msg.get("usage"));
+                return true;
+            }
+            String mapName = args[1];
+            List<String> available = getAvailableWorlds();
+            if (available.contains(mapName)) {
+                Map<String, String> params = new HashMap<>();
+                params.put("map", mapName);
+                player.sendMessage(msg.get("already-exists", params));
+                return true;
+            }
+
+            player.sendMessage("§aWelt-Generierung gestartet...");
+
+            Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+                int totalChunks = 100;
+                for (int i = 1; i <= totalChunks; i++) {
+                    int progress = i;
+                    Bukkit.getScheduler().runTask(this, () -> {
+                        sendActionBar(player, "§eGeneriere Welt: §a" + progress + "%");
+                    });
+                    try {
+                        Thread.sleep(30);
+                    } catch (InterruptedException ignored) {}
+                }
+                // Welt ERST JETZT synchron erstellen!
+                Bukkit.getScheduler().runTask(this, () -> {
+                    WorldCreator creator = new WorldCreator(mapName);
+                    World world = Bukkit.createWorld(creator);
+                    Map<String, String> params = new HashMap<>();
+                    params.put("map", mapName);
+                    player.sendMessage(msg.get("create-success", params));
+                    sendActionBar(player, "§aWelt-Generierung abgeschlossen!");
+                });
+            });
             return true;
         }
 
@@ -171,6 +223,25 @@ public class MapTeleport extends JavaPlugin implements CommandExecutor, TabCompl
 
         player.sendMessage(msg.get("usage"));
         return true;
+    }
+
+    private void sendActionBar(Player player, String message) {
+        try {
+            Object craftPlayer = player.getClass().getMethod("getHandle").invoke(player);
+            Object packet;
+            String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+            Class<?> chatComponentText = Class.forName("net.minecraft.server." + version + ".ChatComponentText");
+            Object chatComponent = chatComponentText.getConstructor(String.class).newInstance(message);
+            Class<?> packetPlayOutChat = Class.forName("net.minecraft.server." + version + ".PacketPlayOutChat");
+            packet = packetPlayOutChat.getConstructor(
+                    Class.forName("net.minecraft.server." + version + ".IChatBaseComponent"),
+                    byte.class
+            ).newInstance(chatComponent, (byte) 2);
+            Object playerConnection = craftPlayer.getClass().getField("playerConnection").get(craftPlayer);
+            playerConnection.getClass().getMethod("sendPacket", Class.forName("net.minecraft.server." + version + ".Packet")).invoke(playerConnection, packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private Location loadSpawn(String mapName) {
